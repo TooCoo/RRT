@@ -1,0 +1,3 @@
+<launch>
+  <node name="pioneer3at" pkg="rostopic" type="rostopic" output="screen" args="ehco /path_planner_rrt >>~/catkin_ws/coordinate.txt">
+</launch>
