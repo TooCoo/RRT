@@ -116,6 +116,8 @@ int main(int argc,char** argv)
 	//defining Publisher
 	ros::Publisher env_publisher = n.advertise<visualization_msgs::Marker>("path_planner_rrt",1);
 
+
+
 	//defining markers
     visualization_msgs::Marker boundary;
     visualization_msgs::Marker obstacle;
@@ -135,8 +137,8 @@ int main(int argc,char** argv)
 
     while(ros::ok())
     {
-        //env_publisher.publish(boundary);
-        //env_publisher.publish(obstacle);
+        env_publisher.publish(boundary);
+        env_publisher.publish(obstacle);
         ros::spinOnce();
         ros::Duration(1).sleep();
     }

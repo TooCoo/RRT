@@ -11,8 +11,11 @@
 #include <unistd.h>
 #include <vector>
 #include <time.h>
+#include <string>
 //#include <std_msgs/Header.msg>
 
+
+// /UAV_1/pose
 
 #define success false
 #define running true
@@ -35,11 +38,11 @@ void initializeMarkers(visualization_msgs::Marker &sourcePoint,
 	sourcePoint.pose.orientation.w = goalPoint.pose.orientation.w = randomPoint.pose.orientation.w = rrtTreeMarker.pose.orientation.w = finalPath.pose.orientation.w = 1.0;
 
     //setting id for each marker
-    sourcePoint.id    = 0;
+    	sourcePoint.id    = 0;
 	goalPoint.id      = 1;
 	randomPoint.id    = 2;
 	rrtTreeMarker.id  = 3;
-    finalPath.id      = 4;
+    	finalPath.id      = 4;
 
 	//defining types
 	rrtTreeMarker.type                                    = visualization_msgs::Marker::LINE_LIST;
@@ -50,13 +53,13 @@ void initializeMarkers(visualization_msgs::Marker &sourcePoint,
 	rrtTreeMarker.scale.x = 0.2;
 	finalPath.scale.x     = 1;
 	sourcePoint.scale.x   = goalPoint.scale.x = randomPoint.scale.x = 2;
-    sourcePoint.scale.y   = goalPoint.scale.y = randomPoint.scale.y = 2;
-    sourcePoint.scale.z   = goalPoint.scale.z = randomPoint.scale.z = 1;
+    	sourcePoint.scale.y   = goalPoint.scale.y = randomPoint.scale.y = 2;
+    	sourcePoint.scale.z   = goalPoint.scale.z = randomPoint.scale.z = 1;
 
     //assigning colors
 	sourcePoint.color.r   = 1.0f;
 	goalPoint.color.g     = 1.0f;
-    randomPoint.color.b   = 1.0f;
+    	randomPoint.color.b   = 1.0f;
 
 	rrtTreeMarker.color.r = 0.8f;
 	rrtTreeMarker.color.g = 0.4f;
@@ -278,6 +281,7 @@ int main(int argc,char** argv)
                 }
             }
             setFinalPathData(rrtPaths, myRRT, shortestPath, finalPath, goalX, goalY);
+	    finalPath.text = std::string("0");
             rrt_publisher.publish(finalPath);
         }
 
