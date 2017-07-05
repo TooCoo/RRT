@@ -14,11 +14,10 @@
 #include <std_msgs/String.h>
 
 int uav_num;
-geometry_msgs::Point uav_start;
-geometry_msgs::Point uav_goal;
+visualization_msgs::Marker uav_start;
+visualization_msgs::Marker uav_goal;
 
 using namespace std;
-
 
 #define success false
 #define running true
@@ -194,20 +193,16 @@ void Id_Callback(const std_msgs::String::ConstPtr& msg)
    uav_num = std::atoi(msg->data.c_str());
 }
 
-void Start_Callback(geometry_msgs::Point::ConstPtr& msg)
+void Start_Callback(const visualization_msgs::Marker::ConstPtr& msg)
 {
-   ROS_INFO("UAV_Start x: [%s]", msg->x);
-   ROS_INFO("UAV_Start y: [%s]", msg->y);
-   uav_start.x = msg->x;
-   uav_start.y = msg->y;
+   ROS_INFO("UAV_Start : [%s]", msg->pose.position);
+   uav_start.pose.position = msg->pose.position;
 }
 
-void Goal_Callback(geometry_msgs::Point::ConstPtr& msg)
+void Goal_Callback(const visualization_msgs::Marker::ConstPtr& msg)
 {
-   ROS_INFO("UAV_Goal x: [%s]", msg->x);
-   ROS_INFO("UAV_Goal y: [%s]", msg->y);
-   uav_goal.x = msg->x;
-   uav_goal.y = msg->y;
+   ROS_INFO("UAV_Goal : [%s]", msg->pose.position);
+   uav_goal.pose.position = msg->pose.position;
 }
 
 int main(int argc,char** argv)
@@ -234,17 +229,17 @@ int main(int argc,char** argv)
     ros::Subscriber goal_sub = n.subscribe("data_goal", 1000, Goal_Callback);
 
 //Calculate the distance between previous goal point and current goal point, if it is more than 0.1m, processing the path planning algorithm
-    while(sqrt(pow(uav_goal.x-goalPoint.pose.position.x)+pow(uav_goal.y-goalPoint.pose.position.y)) < 0.1)
+    while(sqrt(pow(uav_goal.pose.position.x - goalPoint.pose.position.x, 2.0)+pow(uav_goal.pose.position.y-goalPoint.pose.position.y, 2.0)) < 0.1)
     {
       ROS_INFO("UAV_goal has no change");
     }
 
       //setting source and goal
-      sourcePoint.pose.position.x = uav_start.x;
-      sourcePoint.pose.position.y = uav_start.y;
+      sourcePoint.pose.position.x = uav_start.pose.position.x;
+      sourcePoint.pose.position.y = uav_start.pose.position.y;
 
-      goalPoint.pose.position.x = uav_goal.x;
-      goalPoint.pose.position.y = uav_goal.y;
+      goalPoint.pose.position.x = uav_goal.pose.position.x;
+      goalPoint.pose.position.y = uav_goal.pose.position.y;
 
 //    rospy.wait_for_message('move_base_simple/goal', PoseStamped);
 //    rospy.Subscriber('move_base_simple/goal', PoseStamped, self.update_goal);
