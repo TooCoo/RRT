@@ -11,11 +11,14 @@
 #include <unistd.h>
 #include <vector>
 #include <time.h>
-#include <string>
-//#include <std_msgs/Header.msg>
+#include <std_msgs/String.h>
 
+int uav_num;
+geometry_msgs::Point uav_start;
+geometry_msgs::Point uav_goal;
 
-// /UAV_1/pose
+using namespace std;
+
 
 #define success false
 #define running true
@@ -23,6 +26,8 @@
 using namespace rrt;
 
 bool status = running;
+
+vector< vector<int> > rrtPaths;
 
 void initializeMarkers(visualization_msgs::Marker &sourcePoint,
     visualization_msgs::Marker &goalPoint,
@@ -38,11 +43,11 @@ void initializeMarkers(visualization_msgs::Marker &sourcePoint,
 	sourcePoint.pose.orientation.w = goalPoint.pose.orientation.w = randomPoint.pose.orientation.w = rrtTreeMarker.pose.orientation.w = finalPath.pose.orientation.w = 1.0;
 
     //setting id for each marker
-    	sourcePoint.id    = 0;
+    sourcePoint.id    = 0;
 	goalPoint.id      = 1;
 	randomPoint.id    = 2;
 	rrtTreeMarker.id  = 3;
-    	finalPath.id      = 4;
+    finalPath.id      = 4;
 
 	//defining types
 	rrtTreeMarker.type                                    = visualization_msgs::Marker::LINE_LIST;
@@ -53,13 +58,13 @@ void initializeMarkers(visualization_msgs::Marker &sourcePoint,
 	rrtTreeMarker.scale.x = 0.2;
 	finalPath.scale.x     = 1;
 	sourcePoint.scale.x   = goalPoint.scale.x = randomPoint.scale.x = 2;
-    	sourcePoint.scale.y   = goalPoint.scale.y = randomPoint.scale.y = 2;
-    	sourcePoint.scale.z   = goalPoint.scale.z = randomPoint.scale.z = 1;
+    sourcePoint.scale.y   = goalPoint.scale.y = randomPoint.scale.y = 2;
+    sourcePoint.scale.z   = goalPoint.scale.z = randomPoint.scale.z = 1;
 
     //assigning colors
 	sourcePoint.color.r   = 1.0f;
 	goalPoint.color.g     = 1.0f;
-    	randomPoint.color.b   = 1.0f;
+    randomPoint.color.b   = 1.0f;
 
 	rrtTreeMarker.color.r = 0.8f;
 	rrtTreeMarker.color.g = 0.4f;
@@ -182,10 +187,33 @@ void setFinalPathData(vector< vector<int> > &rrtPaths, RRT &myRRT, int i, visual
     finalpath.points.push_back(point);
 }
 
+
+void Id_Callback(const std_msgs::String::ConstPtr& msg)
+{
+   ROS_INFO("UAV_id: [%s]", msg->data.c_str());
+   uav_num = std::atoi(msg->data.c_str());
+}
+
+void Start_Callback(geometry_msgs::Point::ConstPtr& msg)
+{
+   ROS_INFO("UAV_Start x: [%s]", msg->x);
+   ROS_INFO("UAV_Start y: [%s]", msg->y);
+   uav_start.x = msg->x;
+   uav_start.y = msg->y;
+}
+
+void Goal_Callback(geometry_msgs::Point::ConstPtr& msg)
+{
+   ROS_INFO("UAV_Goal x: [%s]", msg->x);
+   ROS_INFO("UAV_Goal y: [%s]", msg->y);
+   uav_goal.x = msg->x;
+   uav_goal.y = msg->y;
+}
+
 int main(int argc,char** argv)
 {
-    //initializing ROS
-    ros::init(argc,argv,"rrt_node");
+  //initializing ROS
+  ros::init(argc,argv,"rrt_node");
 	ros::NodeHandle n;
 
 	//defining Publisher
@@ -201,12 +229,22 @@ int main(int argc,char** argv)
 //    initializePath(finalPath);
     initializeMarkers(sourcePoint, goalPoint, randomPoint, rrtTreeMarker, finalPath);
 
-    //setting source and goal
-    sourcePoint.pose.position.x = 2;
-    sourcePoint.pose.position.y = 2;
+    ros::Subscriber id_sub = n.subscribe("data_id", 1000, Id_Callback);
+    ros::Subscriber start_sub = n.subscribe("data_start", 1000, Start_Callback);
+    ros::Subscriber goal_sub = n.subscribe("data_goal", 1000, Goal_Callback);
 
-    goalPoint.pose.position.x = 95;
-    goalPoint.pose.position.y = 95;
+//Calculate the distance between previous goal point and current goal point, if it is more than 0.1m, processing the path planning algorithm
+    while(sqrt(pow(uav_goal.x-goalPoint.pose.position.x)+pow(uav_goal.y-goalPoint.pose.position.y)) < 0.1)
+    {
+      ROS_INFO("UAV_goal has no change");
+    }
+
+      //setting source and goal
+      sourcePoint.pose.position.x = uav_start.x;
+      sourcePoint.pose.position.y = uav_start.y;
+
+      goalPoint.pose.position.x = uav_goal.x;
+      goalPoint.pose.position.y = uav_goal.y;
 
 //    rospy.wait_for_message('move_base_simple/goal', PoseStamped);
 //    rospy.Subscriber('move_base_simple/goal', PoseStamped, self.update_goal);
@@ -232,7 +270,7 @@ int main(int argc,char** argv)
 
     int rrtStepSize = 3;
 
-    vector< vector<int> > rrtPaths;
+//    vector< vector<int> > rrtPaths;
     vector<int> path;
     int rrtPathLimit = 1;
 
@@ -281,17 +319,17 @@ int main(int argc,char** argv)
                 }
             }
             setFinalPathData(rrtPaths, myRRT, shortestPath, finalPath, goalX, goalY);
-	    finalPath.text = std::string("0");
             rrt_publisher.publish(finalPath);
         }
 
 
-//        rrt_publisher.publish(sourcePoint);
-//        rrt_publisher.publish(goalPoint);
+        rrt_publisher.publish(sourcePoint);
+        rrt_publisher.publish(goalPoint);
 //        rrt_publisher.publish(rrtTreeMarker);
 //        rrt_publisher.publish(finalPath);
-        ros::spinOnce();
-        ros::Duration(0.01).sleep();
+//        ros::spinOnce();
+        ros::spin();
+//        ros::Duration(0.01).sleep();
     }
 	return 1;
 }
